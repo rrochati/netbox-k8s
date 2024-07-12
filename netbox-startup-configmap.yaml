@@ -88,3 +88,4 @@ data:
   # Script for fixing permission issue in unit temporary folder
   nginx-caching-fix.sh: |
     chown unit:root -R /opt/unit/tmp/
+    

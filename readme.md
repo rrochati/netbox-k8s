@@ -10,16 +10,12 @@ Simple Netbox setup on a local kubernetnes cluster
 To get NetBox up and running on a Kubernetes cluster:
 
 1. Deploy postgresql:
-    * kubectl apply -f `postgre-namespace.yaml` 
-    * kubectl apply -n postgre -f `postgre-secret.yaml`
+    * kubectl apply -f `postgre-basics.yaml` 
     * kubectl apply -n postgre -f `postgre-deployment.yaml`
     * If the namespace is changed, ensure all manifests are updated accordingly
 2. Deploy netbox-k8s:
-    * kubectl apply -f `netbox-namespace.yaml`
-    * kubectl apply -n netbox-k8s -f `netbox-configmap.yaml`
+    * kubectl apply -f `netbox-basics.yaml`
     * kubectl apply -n netbox-k8s -f `netbox-startup-configmap.yaml`
-    * kubectl apply -n netbox-k8s -f `sso-saml2-configmap.yaml`
-    * kubectl apply -n netbox-k8s -f `netbox-secret.yaml`
     * kubectl apply -n netbox-k8s -f `netbox-deployment.yaml`
 
 ## References:

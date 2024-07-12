@@ -40,17 +40,53 @@ spec:
         env:
           - name: PGDATA
             value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: db-vol
+          mountPath: "/var/lib/postgresql/data"
+          subPath: "pgdata"
+      volumes:
+        - name: db-vol
+          persistentVolumeClaim:
+            claimName: postgre-pvc
 ---
+# An ubuntu pod if you need any troubleshot
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: ubuntu
+#   namespace: postgre
+# spec:
+#   selector:
+#     matchLabels:
+#       app: ubuntu
+#   template:
+#     metadata:
+#       labels:
+#         app: ubuntu
+#     spec:
+#       containers:
+#       - name: ubuntu
+#         image: ubuntu:latest
+#         args:
+#           - sleep
+#           - infinity
+#         resources:
+#           limits:
+#             memory: "128Mi"
+#             cpu: "500m"
+# ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgresql
   namespace: postgre
 spec:
+  type: ClusterIP # Service exposed for the k8s cluster only. If you want to access externally, change to LoadBalancer
   selector:
     app: postgresql
   ports:
-  - port: 5432
+  - name: db-port
+    protocol: TCP
+    port: 5432
     targetPort: 5432
-    # nodePort: 30000
-  type: LoadBalancer
+  
