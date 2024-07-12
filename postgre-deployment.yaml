@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+  namespace: postgre
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15.0 
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "100Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 5432
+        livenessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 3 # Número de segundos após o início do container para o liveness
+            periodSeconds: 10 # Intervalo de tempo entre as verificações
+            failureThreshold: 3 # Número de falhas pra considerar a aplicação não saudável
+            successThreshold: 1 # Número de sucessos para zerar o failureThreshold (No liveness é 1)
+            timeoutSeconds: 3 # Timeout da chamada
+            terminationGracePeriodSeconds: 30
+        envFrom:
+        - secretRef:
+            name: postgre-secret
+        env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  namespace: postgre
+spec:
+  selector:
+    app: postgresql
+  ports:
+  - port: 5432
+    targetPort: 5432
+    # nodePort: 30000
+  type: LoadBalancer
