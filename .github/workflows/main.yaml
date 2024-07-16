@@ -3,13 +3,9 @@ on:
   # push:
   #   branches: ["main"]
   workflow_dispatch:
-# env:
-  #ENV_WORKFLOW: "Valor var no escopo do workflow"
 jobs:
   CD:
     runs-on: ubuntu-latest
-    # env:
-      # ENV_JOB: "Valor var no escopo do job"
     steps:
     - name: Obtendo o código
       uses: actions/checkout@v4.1.5
@@ -33,5 +29,3 @@ jobs:
           ./netbox-basics.yaml
           ./netbox-startup-configmap.yaml
           ./netbox-deployment.yaml
-        # images: |
-        #   rrochati/netbox-k8s:v${{ github.run_number }}
