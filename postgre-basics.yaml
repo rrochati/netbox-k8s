@@ -17,3 +17,16 @@ spec:
     requests:
       storage: 2Gi
   storageClassName: do-block-storage
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgre-secret
+  namespace: postgre
+type: Opaque
+data:
+  POSTGRES_PASSWORD: "WVJjV0txR3hpcHZWdTFMTWtmNUU=" # value in base64 format. run on a terminal: echo -n "value" | base64
+  # pass: YRcWKqGxipvVu1LMkf5E
+  POSTGRES_USER: "bmV0Ym94"
+  POSTGRES_DB: "bmV0Ym94"
+  POSTGRES_HOST: "cG9zdGdyZXNxbA=="
