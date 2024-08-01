@@ -3,7 +3,7 @@ Simple Netbox setup on a local kubernetnes cluster
 
 ## Notes
 
-* The NetBox deployment will work with existing redis and postgresql installations, just ensure that the configurations are changed in `netbox-configmap.yaml`, `netbox-secret.yaml` and `netbox-deployment.yaml`
+* The NetBox deployment will work with existing postgresql installation, just ensure that the configurations are changed in `netbox-configmap.yaml`, `netbox-secret.yaml` and `netbox-deployment.yaml`
 
 ## Installation
 
