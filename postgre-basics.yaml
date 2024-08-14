@@ -29,8 +29,8 @@ spec:
     cloudName: AzurePublicCloud
     usePodIdentity: "false"
     useVMManagedIdentity: "true"                        # Set to true for using managed identity
-    userAssignedIdentityID: 89225c33-dfe6-4019-98c3-0e6646787278  # Set the AZURE_KEYVAULT_CLIENTID of the Service Connector
-    tenantId: 38f6b2ae-d0a9-4f7d-a054-ba48094330c0                 # The tenant ID of the key vault
+    userAssignedIdentityID: <SP_ID>  # Set the AZURE Secres Provider CLIENTID of the Service Connector
+    tenantId: <TENANT_ID>                 # The tenant ID of the key vault
     keyvaultName: postgre-secret               # Set to the name of your key vault
     # Importing secrets from keyvault
     objects:  | 

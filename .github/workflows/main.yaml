@@ -3,7 +3,40 @@ on:
   # push:
   #   branches: ["main"]
   workflow_dispatch:
+    inputs: #Dados que serão solicitados ao executar o workflow
+        userAssignedIdentityID:
+            type: string
+            required: true
+            default: ""
+            description: "identity.clientId of your cluster Secrets Provider"
+        tenantId:
+            type: string
+            required: true
+            default: ""
+            description: "Your Azure Tenant ID"
 jobs:
+  deploy_postgre:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Obtendo o código
+      uses: actions/checkout@v4.1.5
+    - name: Configuração de contexto do Kubernetes
+      uses: azure/k8s-set-context@v4.0.0
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.K8S_CONFIG }}
+    - name: Update yaml files
+      run: |
+        sed -i -e 's/<TENANT_ID>/${{ inputs.tenantId }}' ./postgre-basics.yaml
+        sed -i -e 's/<SP_ID>/${{ inputs.userAssignedIdentityID }}' ./postgre-basics.yaml
+    - name: Postgre deploy
+      uses: Azure/k8s-deploy@v5
+      with:
+        namespace: postgre
+        manifests: |
+          ./postgre-basics.yaml
+          ./postgre-deployment.yaml
+  
   deploy_netbox:
     runs-on: ubuntu-latest
     steps:
@@ -14,13 +47,10 @@ jobs:
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.K8S_CONFIG }}
-    - name: Postgre deploy
-      uses: Azure/k8s-deploy@v5
-      with:
-        namespace: postgre
-        manifests: |
-          ./postgre-basics.yaml
-          ./postgre-deployment.yaml
+    - name: Update yaml files
+      run: |
+        sed -i -e 's/<TENANT_ID>/${{ inputs.tenantId }}' ./netbox-basics.yaml
+        sed -i -e 's/<SP_ID>/${{ inputs.userAssignedIdentityID }}' ./netbox-basics.yaml
     - name: Netbox deploy
       uses: Azure/k8s-deploy@v5
       with:
