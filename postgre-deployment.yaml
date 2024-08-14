@@ -28,15 +28,15 @@ spec:
         livenessProbe:
             tcpSocket:
               port: 5432
-            initialDelaySeconds: 3 # Número de segundos após o início do container para o liveness
-            periodSeconds: 10 # Intervalo de tempo entre as verificações
-            failureThreshold: 3 # Número de falhas pra considerar a aplicação não saudável
-            successThreshold: 1 # Número de sucessos para zerar o failureThreshold (No liveness é 1)
-            timeoutSeconds: 3 # Timeout da chamada
+            initialDelaySeconds: 3 # Number of seconts after the container start to start polling
+            periodSeconds: 10 # Time interval between checks
+            failureThreshold: 3 # Number of fails to consiger the app unhealthy
+            successThreshold: 1 # Number os successes to clear the failureThreshold (default 1)
+            timeoutSeconds: 3 # Call timeout
             terminationGracePeriodSeconds: 30
         envFrom:
         - secretRef:
-            name: postgre-secret
+            name: postgre-secret-k8s
         env:
           - name: PGDATA
             value: /var/lib/postgresql/data/pgdata
@@ -44,11 +44,20 @@ spec:
         - name: db-vol
           mountPath: "/var/lib/postgresql/data"
           subPath: "pgdata"
+        - name: secrets-store01-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
       volumes:
+        - name: secrets-store01-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: pg-secret-store
         - name: db-vol
           persistentVolumeClaim:
             claimName: postgre-pvc
----
+# ---
 # An ubuntu pod if you need any troubleshot
 # apiVersion: apps/v1
 # kind: Deployment
@@ -74,7 +83,7 @@ spec:
 #           limits:
 #             memory: "128Mi"
 #             cpu: "500m"
-# ---
+---
 apiVersion: v1
 kind: Service
 metadata:

@@ -4,22 +4,6 @@ metadata:
   name: netbox-k8s
 ---
 apiVersion: v1
-kind: Secret
-metadata:
-  name: netbox-secret
-  namespace: netbox-k8s
-type: Opaque
-data:
-  auth_ldap_bind_password: Cg==
-  email_password: dGVzdAo=
-  napalm_password: Cg==
-  secret_key: ISQ5cW1VQDlxaXhQRTZRbiptZnc5NHRPb2xKZGtFYSNlOEY0NTZlMTdOdmlCNXFsbms=
-  superuser_password: c3VwZXJwYXNzd29yZA==
-  #superpassword
-  superuser_api_token: NDhjN2JhOTItMGY4Mi00NDNhLThjZjMtOTgxNTU5ZmYzMmNm
-  db_password: "WVJjV0txR3hpcHZWdTFMTWtmNUU="
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
   name: netbox-configmap
@@ -49,12 +33,92 @@ data:
   DEBUG: 'False'
 ---
 apiVersion: v1
-data:
-  sso-saml2-metadata.xml: |
-    # Just a template. Replace content with saml2 metadata of your SSO solution, if applicable.
-    #changeme
 kind: ConfigMap
 metadata:
   creationTimestamp: "2024-07-05T10:58:14+01:00"
   name: sso-saml2-xml
   namespace: netbox-k8s
+data:
+  sso-saml2-metadata.xml: |
+    # Just a template. Replace content with saml2 metadata of your SSO solution, if applicable.
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: netbox-secret-store
+  namespace: netbox-k8s
+spec:
+  provider: azure
+  parameters:
+    cloudName: AzurePublicCloud
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"                        # Set to true for using managed identity
+    userAssignedIdentityID: 89225c33-dfe6-4019-98c3-0e6646787278  # Set the AZURE_KEYVAULT_CLIENTID of the Service Connector
+    tenantId: 38f6b2ae-d0a9-4f7d-a054-ba48094330c0                 # The tenant ID of the key vault
+    keyvaultName: netbox-secret               # Set to the name of your key vault
+    # Importing secrets from keyvault
+    objects:  | 
+      array:
+        - |
+          objectName: AUTH-LDAP-BIND-PASSWORD2           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: EMAIL-PASSWORD           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: NAPALM-PASSWORD           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: SECRET-KEY           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: SUPERUSER-PASSWORD           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: SUPERUSER-API-TOKEN           # keyvault secret name
+          objectType: secret
+  secretObjects:
+  # Creating the k8s secret with the data imported from keyvault
+  - data:
+    - key: auth_ldap_bind_password #new secret name
+      objectName: AUTH-LDAP-BIND-PASSWORD2  #name of the secret keyvalt to sync from
+    - key: email_password #new secret name
+      objectName: EMAIL-PASSWORD #name of the secret keyvalt to sync from
+    - key: napalm_password  #new secret name
+      objectName: NAPALM-PASSWORD  #name of the secret keyvalt to sync from
+    - key: secret_key  #new secret name
+      objectName: SECRET-KEY  #name of the secret keyvalt to sync from
+    - key: superuser_password  #new secret name
+      objectName: SUPERUSER-PASSWORD  #name of the secret keyvalt to sync from
+    - key: superuser_api_token  #new secret name
+      objectName: SUPERUSER-API-TOKEN  #name of the secret keyvalt to sync from
+    secretName: netbox-secret-k8s #name of the k8s secret object to be created. This is the one you will refer on the deployment
+    type: Opaque  #type of the secret object
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: db-secret-store
+  namespace: netbox-k8s
+spec:
+  provider: azure
+  parameters:
+    cloudName: AzurePublicCloud
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"                        # Set to true for using managed identity
+    userAssignedIdentityID: 89225c33-dfe6-4019-98c3-0e6646787278  # Set the AZURE_KEYVAULT_CLIENTID of the Service Connector
+    tenantId: 38f6b2ae-d0a9-4f7d-a054-ba48094330c0                 # The tenant ID of the key vault
+    keyvaultName: postgre-secret                # Set to the name of your key vault
+    # Importing secrets from keyvault
+    objects:  | 
+      array:
+        - |
+          objectName: POSTGRES-PASSWORD           # keyvault secret name
+          objectType: secret
+  secretObjects:
+  # Creating the k8s secret with the data imported from keyvault
+  - data:
+    - key: db_password #new secret name
+      objectName: POSTGRES-PASSWORD  #name of the secret keyvalt to sync from
+    secretName: db-secret-k8s #name of the k8s secret object to be created. This is the one you will refer on the deployment
+    type: Opaque  #type of the secret object
