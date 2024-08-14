@@ -16,4 +16,42 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: do-block-storage
+  storageClassName: default
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: pg-secret-store
+  namespace: postgre
+spec:
+  provider: azure
+  parameters:
+    cloudName: AzurePublicCloud
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"                        # Set to true for using managed identity
+    userAssignedIdentityID: 89225c33-dfe6-4019-98c3-0e6646787278  # Set the AZURE_KEYVAULT_CLIENTID of the Service Connector
+    tenantId: 38f6b2ae-d0a9-4f7d-a054-ba48094330c0                 # The tenant ID of the key vault
+    keyvaultName: postgre-secret               # Set to the name of your key vault
+    # Importing secrets from keyvault
+    objects:  | 
+      array:
+        - |
+          objectName: POSTGRES-HOST           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: POSTGRES-USER           # keyvault secret name
+          objectType: secret
+        - |
+          objectName: POSTGRES-PASSWORD           # keyvault secret name
+          objectType: secret
+  secretObjects:
+  # Creating the k8s secret with the data imported from keyvault
+  - data:
+    - key: POSTGRES_PASSWORD #new secret name
+      objectName: POSTGRES-PASSWORD  #name of the secret keyvalt to sync from
+    - key: POSTGRES_USER #new secret name
+      objectName: POSTGRES-USER #name of the secret keyvalt to sync from
+    - key: POSTGRES_HOST  #new secret name
+      objectName: POSTGRES-HOST  #name of the secret keyvalt to sync from
+    secretName: postgre-secret-k8s #name of the k8s secret object to be created. This is the one you will refer on the deployment
+    type: Opaque  #type of the secret object

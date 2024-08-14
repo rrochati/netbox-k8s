@@ -16,7 +16,6 @@ spec:
         k8s-app: netbox
     spec:
       containers:
-      # NetBox container using the netbox-docker image: https://github.com/netbox-community/netbox-docker
       - name: netbox
         image: quay.io/netboxcommunity/netbox:v2.11.12-ldap
         resources:
@@ -49,27 +48,10 @@ spec:
                   bash /home/start-rqworker.sh &&
                   bash /home/nginx-caching-fix.sh
         volumeMounts:
-        # Mounting secrets for netbox and other related components
-        # - name: auth-ldap-bind-password
-        #   mountPath: /run/secrets/auth_ldap_bind_password
-        #   subPath: auth_ldap_bind_password
-        #   readOnly: true
         - name: db-secret
           mountPath: /run/secrets/db_password
           subPath: db_password
           readOnly: true
-        # - name: email-password
-        #   mountPath: /run/secrets/email_password
-        #   subPath: email_password
-        #   readOnly: true
-        # - name: napalm-password
-        #   mountPath: /run/secrets/napalm_password
-        #   subPath: napalm_password
-        #   readOnly: true
-        # - name: redis-secret
-        #   mountPath: /run/secrets/redis_password
-        #   subPath: redis_password
-        #   readOnly: true
         - name: secret-key
           mountPath: /run/secrets/secret_key
           subPath: secret_key
@@ -81,15 +63,6 @@ spec:
           mountPath: /run/secrets/superuser_password
           subPath: superuser_password
           readOnly: true
-        # Persistent Volume paths
-        # - name: netbox-media-files # Allows for multiple replicas of the netbox pod to be available
-        #   mountPath: /opt/netbox/netbox/media
-        # - name: ldap-config # Allows for LDAP authentication to work
-        #   subPath: ldap_config.py
-        #   mountPath: /opt/netbox/netbox/netbox/ldap_config.py
-        # - mountPath: /etc/netbox/config/netbox-plugins.py
-        #   name: netbox-plugins
-          # subPath: netbox-plugins.py
         - mountPath: /home/install-plugins.sh
           name: install-plugins
           subPath: install-plugins.sh
@@ -102,19 +75,13 @@ spec:
         - name: sso-saml2-xml
           mountPath: /opt/netbox/sso-saml2.xml
           subPath: sso-saml2-metadata.xml
+        - name: secrets-store01-inline
+          mountPath: "/mnt/secrets-store"
+        - name: secrets-store02-inline
+          mountPath: "/mnt/secrets-store2"
+          readOnly: true
       restartPolicy: Always
       volumes:
-      # Reference to configmaps and PVs
-      # - name: netbox-media-files
-      #   persistentVolumeClaim:
-      #     claimName: netbox-media-pvc
-      #     readOnly: false
-      # - name: ldap-config
-      #   configMap:
-      #     name: netbox-configmap
-      #     items:
-      #       - key: ldap_config.py
-      #         path: ldap_config.py
       - name: netbox-plugins
         configMap:
           name: startup-configmap
@@ -146,51 +113,57 @@ spec:
             - key: sso-saml2-metadata.xml
               path: sso-saml2-metadata.xml
       # Populate via secret
+      - name: secrets-store01-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: netbox-secret-store
+      - name: secrets-store02-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: db-secret-store
       - name: auth-ldap-bind-password
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: auth_ldap_bind_password
             path: auth_ldap_bind_password
       - name: db-secret
         secret:
-          secretName: netbox-secret
+          secretName: db-secret-k8s
           items:
           - key: db_password
             path: db_password
       - name: email-password
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: email_password
             path: email_password
       - name: napalm-password
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: napalm_password
             path: napalm_password
-      # - name: redis-secret
-      #   secret:
-      #     secretName: redis-secret
-      #     items:
-      #     - key: REDIS_PASSWORD
-      #       path: redis_password
       - name: secret-key
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: secret_key
             path: secret_key
       - name: superuser-password
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: superuser_password
             path: superuser_password
       - name: superuser-api-token
         secret:
-          secretName: netbox-secret
+          secretName: netbox-secret-k8s
           items:
           - key: superuser_api_token
             path: superuser_api_token
@@ -206,7 +179,6 @@ spec:
   ports:
   - port: 8080
     targetPort: http
-    # nodePort: 30000
   selector:
     k8s-app: netbox
   type: LoadBalancer
